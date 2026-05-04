@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, Any, List
 from supabase import create_client, Client
+from dotenv import load_dotenv
 from PIL import Image
 import uuid
 
