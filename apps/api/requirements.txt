@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+python-multipart
+requests
+supabase
+python-dotenv
+rembg
+pillow
