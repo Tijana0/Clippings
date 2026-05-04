@@ -1,8 +1,9 @@
-fastapi
-uvicorn
-python-multipart
-requests
-supabase
-python-dotenv
-rembg
-pillow
+fastapi==0.109.0
+uvicorn==0.27.0
+python-multipart==0.0.6
+requests==2.31.0
+supabase==2.3.0
+python-dotenv==1.0.1
+rembg==2.0.53
+pillow==10.2.0
+onnxruntime==1.17.0
