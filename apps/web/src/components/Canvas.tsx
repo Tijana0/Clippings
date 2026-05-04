@@ -25,12 +25,12 @@ const Clipping = ({ item }: { item: Item }) => {
   const [zIndex, setZIndex] = useState(1);
 
   const updatePosition = async (event: any, info: any) => {
-    const { x, y } = info.point;
-    // We update Supabase with the new coordinates
-    // In a real app, we'd throttle this or update onDragEnd
+    const newX = item.x_pos + info.offset.x;
+    const newY = item.y_pos + info.offset.y;
+
     await supabase
       .from('items')
-      .update({ x_pos: x, y_pos: y })
+      .update({ x_pos: newX, y_pos: newY })
       .eq('id', item.id);
   };
 
@@ -46,6 +46,8 @@ const Clipping = ({ item }: { item: Item }) => {
         opacity: 0
       }}
       animate={{ 
+        x: item.x_pos,
+        y: item.y_pos,
         scale: 1,
         opacity: 1 
       }}
@@ -57,10 +59,7 @@ const Clipping = ({ item }: { item: Item }) => {
       onDragStart={() => setZIndex(100)}
       onDragEnd={(e, info) => {
         setZIndex(Math.floor(Math.random() * 10) + 1);
-        // Persist the end position
-        const target = e.target as HTMLElement;
-        const transform = window.getComputedStyle(target).transform;
-        // Simple persistence logic can be added here
+        updatePosition(e, info);
       }}
       className={cn(
         "absolute cursor-grab active:cursor-grabbing",
@@ -131,6 +130,23 @@ export const Canvas = () => {
     <div className="relative w-full h-screen overflow-hidden bg-clippings-cream bg-[radial-gradient(#8C4637_1px,transparent_1px)] [background-size:20px_20px] [background-position:center]">
       {/* Decorative Checkerboard Border */}
       <div className="absolute inset-0 border-[12px] border-clippings-brown pointer-events-none z-50 opacity-10" />
+      
+      <div className="absolute top-8 left-8 z-10">
+        <h1 className="text-4xl font-display text-clippings-brown drop-shadow-sm">
+          My Clippings
+        </h1>
+        <p className="font-body italic text-clippings-brown/80">
+          Digital Scrapbook v0.1
+        </p>
+      </div>
+
+      {items.map((item) => (
+        <Clipping key={item.id} item={item} />
+      ))}
+    </div>
+  );
+};
+der-clippings-brown pointer-events-none z-50 opacity-10" />
       
       <div className="absolute top-8 left-8 z-10">
         <h1 className="text-4xl font-display text-clippings-brown drop-shadow-sm">
