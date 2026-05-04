@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from typing import Optional, Any, List
 from supabase import create_client, Client
 from dotenv import load_dotenv
+from rembg import remove # Move back to top to force error on start if missing
 from PIL import Image
 import uuid
 
@@ -56,14 +57,6 @@ async def get_items():
 @app.post("/clip")
 async def clip_item(request: ClippingRequest):
     print(f"\n--- NEW CLIP REQUEST: {request.title} ---")
-    
-    if not supabase:
-        return {"status": "error", "message": "Server error: Supabase credentials missing"}
-    
-    try:
-        from rembg import remove
-    except ImportError:
-        return {"status": "error", "message": "rembg library not installed on server"}
 
     try:
         # 1. Download
