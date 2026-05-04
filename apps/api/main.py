@@ -17,7 +17,11 @@ app = FastAPI(title="Clippings API")
 # Initialize Supabase
 url: str = os.environ.get("SUPABASE_URL")
 key: str = os.environ.get("SUPABASE_KEY")
-supabase: Client = create_client(url, key)
+
+if not url or not key:
+    print("!!! WARNING: SUPABASE_URL or SUPABASE_KEY is missing from environment !!!")
+
+supabase: Client = create_client(url, key) if (url and key) else None
 
 app.add_middleware(
     CORSMiddleware,
@@ -38,24 +42,34 @@ class ClippingRequest(BaseModel):
 
 @app.get("/")
 async def root():
-    return {"message": "Clippings API is running"}
+    return {"message": "Clippings API is running", "supabase_connected": supabase is not None}
 
 @app.get("/items")
 async def get_items():
-    response = supabase.table("items").select("*").execute()
-    return response.data
+    if not supabase: return {"error": "Supabase not configured"}
+    try:
+        response = supabase.table("items").select("*").execute()
+        return response.data
+    except Exception as e:
+        return {"error": str(e)}
 
 @app.post("/clip")
 async def clip_item(request: ClippingRequest):
-    # Move heavy import here so the server boots fast
-    from rembg import remove
-    
     print(f"\n--- NEW CLIP REQUEST: {request.title} ---")
     
+    if not supabase:
+        return {"status": "error", "message": "Server error: Supabase credentials missing"}
+    
+    try:
+        from rembg import remove
+    except ImportError:
+        return {"status": "error", "message": "rembg library not installed on server"}
+
     try:
         # 1. Download
         print(f"1. Downloading image: {request.image_url[:50]}...")
-        img_response = requests.get(request.image_url, timeout=10)
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
+        img_response = requests.get(request.image_url, timeout=10, headers=headers)
         img_response.raise_for_status()
         input_image = img_response.content
         print("   Success: Image downloaded.")
@@ -78,7 +92,8 @@ async def clip_item(request: ClippingRequest):
         print(f"   Success: Uploaded as {file_name}.")
 
         # Get URL
-        processed_image_url = supabase.storage.from_(bucket_name).get_public_url(file_name)
+        public_url_response = supabase.storage.from_(bucket_name).get_public_url(file_name)
+        processed_image_url = public_url_response
         print(f"   Public URL: {processed_image_url}")
 
         # 4. Save to Database
@@ -104,7 +119,4 @@ async def clip_item(request: ClippingRequest):
     except Exception as e:
         print(f"!!! ERROR DURING CLIPPING !!!")
         print(f"Details: {str(e)}")
-        # Print the traceback for even more detail if needed
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
+        return {"status": "error", "message": str(e)}
