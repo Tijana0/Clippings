@@ -1,35 +1,20 @@
 {
   "manifest_version": 3,
   "name": "Clippings",
-  "version": "0.1.0",
-  "description": "Clip items from the web into your spatial wishlist.",
-  "permissions": [
-    "activeTab",
-    "storage"
-  ],
-  "host_permissions": [
-    "http://127.0.0.1:8000/*",
-    "http://localhost:8000/*"
-  ],
+  "version": "0.1.1",
+  "permissions": ["activeTab", "storage"],
+  "host_permissions": ["https://clippings-production.up.railway.app/*"],
   "action": {
     "default_popup": "popup.html"
   },
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "background.js",
+    "type": "module"
   },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
       "js": ["content.js"]
     }
-  ],
-  "commands": {
-    "clip-item": {
-      "suggested_key": {
-        "default": "Ctrl+Shift+X",
-        "mac": "Command+Shift+X"
-      },
-      "description": "Clip the current item"
-    }
-  }
+  ]
 }

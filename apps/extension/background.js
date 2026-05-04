@@ -1,14 +1,24 @@
-// background.js
-console.log("Clippings Background Service Worker active.");
+console.log("CLIPPINGS_ALIVE");
 
-chrome.commands.onCommand.addListener((command) => {
-  if (command === "clip-item") {
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      if (tabs[0]?.id) {
-        chrome.tabs.sendMessage(tabs[0].id, { action: "CLIP_REQUEST" });
-      }
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  console.log("BG_RECEIVED:", request.action);
+  
+  if (request.action === "SEND_TO_API") {
+    const API_URL = "https://clippings-production.up.railway.app/clip";
+    
+    fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(request.data)
+    })
+    .then(r => r.json())
+    .then(data => {
+      console.log("BG_SUCCESS", data);
+      chrome.tabs.sendMessage(sender.tab.id, { action: "CLIP_SUCCESS", title: request.data.title });
+    })
+    .catch(err => {
+      console.error("BG_ERROR", err);
     });
   }
+  return true;
 });
-
-// The content script now handles the API call directly.

@@ -3,35 +3,24 @@
 console.log("Clippings extension loaded.");
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  console.log("Message received in content script:", request);
+  console.log("Content script received message:", request);
+  
   if (request.action === "CLIP_REQUEST") {
     const data = clipPage();
     if (data) {
-      console.log("Clipping data extracted, sending to API directly...");
-      
-      // Update this URL with your Railway/Render URL once deployed!
-      const API_URL = "https://your-app-name.railway.app/clip";
-      
-      fetch(API_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      })
-      .then(response => response.json())
-      .then(result => {
-        console.log("API Success:", result);
-        showFeedback(data.title);
-        sendResponse({ status: "success" });
-      })
-      .catch(err => {
-        console.error("API Error from Content Script:", err);
-        alert("API Error: Make sure your Python server is running at http://127.0.0.1:8000");
-        sendResponse({ status: "error", error: err });
-      });
+      console.log("Data extracted, passing to background script for secure fetch...");
+      // Background script has higher permissions to talk to the internet
+      chrome.runtime.sendMessage({ action: "SEND_TO_API", data });
+      sendResponse({ status: "success" });
+    } else {
+      sendResponse({ status: "error", message: "No image found" });
     }
   }
+
+  if (request.action === "CLIP_SUCCESS") {
+    showFeedback(request.title);
+  }
+
   return true;
 });
 
