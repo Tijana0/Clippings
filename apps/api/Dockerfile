@@ -15,6 +15,9 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Pre-download the rembg model to bake it into the image
+RUN python -c "from rembg import new_session; new_session('u2net')"
+
 COPY . .
 
 # Set environment variables for rembg to find its models
